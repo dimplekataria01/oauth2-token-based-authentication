@@ -1,38 +1,50 @@
 var express = require('express'),
-	bodyParser = require('body-parser'),
-	oauthserver = require('oauth2-server');
-var passport = require('passport');
-var router = express.Router();
-var parseJson = require('parse-json');
-var model= require('./model');
+    app = express();
+
+const credentials = {
+  client: {
+    id: 'confidentialApplication',
+    secret: 'topSecret'
+  },
+  auth: {
+    tokenHost: 'http://localhost:3000'
+  }
+};
+
+app.get('/', function (req, res) {
 
 
-var app = express();
+    const oauth2 = require('simple-oauth2').create(credentials);
+    const tokenConfig = {};
 
-app.use(bodyParser.urlencoded({ extended: true }));
+//    // Callbacks
+//    // Get the access token object for the client
+//    oauth2.clientCredentials.getToken(tokenConfig, (error, result) => {
+//      if (error) {
+//        return console.log('Access Token Error', error.message);
+//      }
+//
+//     // const accessToken = oauth2.accessToken.create(result);
+//    });
 
-app.use(bodyParser.json());
 
-app.oauth = oauthserver({
-	model: require('./model.js'),
-	grants: ['password', 'client_credentials'],
-	debug: true
+    // Promises
+    // Get the access token object for the client
+    oauth2.clientCredentials
+      .getToken(tokenConfig)
+      .then((result) => {
+        const accessToken = oauth2.accessToken.create(result);
+
+        console.log('Result in express server ::::  '+accessToken.token.access_token);
+      })
+      .catch((error) => {
+        console.log('Access Token error', error.message);
+      });
+
+        res.send('hello you are done');
+
 });
 
+app.listen(8081);
 
-app.all('/oauth/token', app.oauth.grant());
-
-app.get('/authorised', app.oauth.authorise(), function (req, res) {
-	res.send('Congratulations, you are in a secret area!');
-});
-
-
-app.use(app.oauth.errorHandler());
-
-app.listen(3000);
-
-
-exports.isAuthenticated = passport.authenticate('basic', { session : false });
-
-
-module.exports = passport;
+console.log('Express server started on port 8081');
